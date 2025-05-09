@@ -1,0 +1,351 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Phân tích đoạn đoạn văn bản sau, tách các thông tin liên quan đến số tiền, loại giao dịch theo định dạng mẫu:\n\n{\n\"amount\": \"số tiền giao dịch\",\n\"transaction_type\": \"loại giao dịch\",\n\"comment\":\"Bình luận\"\n}\n\nTrong đó:\n- \"số tiền giao dịch\" là dạng số, không có kí tự chữ. Ví dụ 1000, 10000...\n- \"Loại giao dịch\" xác định như sau: điền giá trị Thu nếu nhận tiền, điền giá trị Chi nếu như tiêu tiền.\n- \"Bình luận\" là nội dung bình luận tầm 3 câu về giao dịch chi tiêu bằng Tiếng Việt. \n\nĐoạn văn bản: \n {{ $json.message.text }}",
+        "options": {
+          "systemMessage": "Bạn là một trợ lý tuyệt vời cho nhà bán lẻ tiếng Việt. Luôn trả về dạng JSON. Tuyệt đối trả về tiếng Việt. Only return Vietnamese."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -1220,
+        300
+      ],
+      "id": "32038b4b-cf18-4037-8cb4-d6aba9109670",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let note = $json.output;\n// let endofthink = note.indexOf(\"</think>\");\n\nnote = note.split(\"</think>\")[1].trim().replaceAll(\"\\n\",\"\").replaceAll(\"```\",\"\").replace(\"json\",\"\");\nnote = JSON.parse(note);\nnote[\"content\"] = $('Telegram Trigger').item.json.message.text\n\nvar date = new Date().toISOString();\nnote[\"date\"] = date;\n\nreturn {json: {short_out: note}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -860,
+        300
+      ],
+      "id": "928d3c46-6ed8-4d0e-83af-d8d4f78309ac",
+      "name": "Code",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1560,
+        320
+      ],
+      "id": "47613225-0252-4305-b20a-9f66a71c531a",
+      "name": "Telegram Trigger",
+      "webhookId": "04d238bc-b52a-43b9-8934-6330dc37e541",
+      "credentials": {
+        "telegramApi": {
+          "id": "8R6TktLR03bpJA25",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d08a750-946d-4076-b7cd-7851afa49253",
+              "leftValue": "={{ $json.short_out.transaction_type }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -640,
+        200
+      ],
+      "id": "579306d1-b087-49e6-a416-892dda551366",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "frequencyPenalty": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1280,
+        560
+      ],
+      "id": "0d8a0b18-861a-42c2-ba8f-5b8a4d322a11",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "itQKisBWYkagP67C",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mOuYiveP_c_t3-JQvt8XVIZ_tHgVARp2qBpE3m-DOHY",
+          "mode": "list",
+          "cachedResultName": "seller",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mOuYiveP_c_t3-JQvt8XVIZ_tHgVARp2qBpE3m-DOHY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Kho",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mOuYiveP_c_t3-JQvt8XVIZ_tHgVARp2qBpE3m-DOHY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Tên Sản Phẩm": "="
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Tên Sản Phẩm",
+              "displayName": "Tên Sản Phẩm",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Số Lượng",
+              "displayName": "Số Lượng",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Giá",
+              "displayName": "Giá",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -340,
+        160
+      ],
+      "id": "17f0d116-2749-44fb-99b0-86d2db732d18",
+      "name": "Google Sheets1",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "retryOnFail": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fOpQQOXkOIOWODSS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Xin lỗi, hiện tôi chưa hiểu được nội dung chat của bạn. Vui lòng nhập cú pháp rõ ràng như:\n- Nhập kho 10 cái áo thun\n- Bán 2 đôi giày thể thao",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -380,
+        460
+      ],
+      "id": "7cff6965-0626-4b72-b0bd-e609057f0358",
+      "name": "Telegram2",
+      "webhookId": "3d9497a4-33f1-4ebb-b842-1029c62cd4f7",
+      "credentials": {
+        "telegramApi": {
+          "id": "8R6TktLR03bpJA25",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Chúng tôi đã cập nhật đơn hàng hoặc tồn kho của bạn. Xin cảm ơn!",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -100,
+        160
+      ],
+      "id": "3abf9733-6eb0-42b2-b5f5-4acc89bb183f",
+      "name": "Telegram3",
+      "webhookId": "bd243e75-a1f8-4c68-a138-1636255905b0",
+      "credentials": {
+        "telegramApi": {
+          "id": "8R6TktLR03bpJA25",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Telegram3": [
+      {
+        "json": {
+          "name": "First item",
+          "code": 1
+        }
+      },
+      {
+        "json": {
+          "name": "Second item",
+          "code": 2
+        }
+      }
+    ]
+  },
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Telegram2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "Telegram3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "210b1acc-7ba2-4dd2-8742-37e9e3eb15e5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cd081d4a5ce88f73e8b701d9bd9da9e4e95b6d63fac0c2d7df772b5f8eb39986"
+  },
+  "id": "6GNGBbUIbMr7cFQq",
+  "tags": []
+}
